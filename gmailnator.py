@@ -127,7 +127,6 @@ class Gmailnator:
         return resp.json()["content"].strip()
     
     def wait_for_message(self, address, timeout=60, **match_attributes):
-        assert match_attributes, "No attributes to match were specified."
         cache = self.get_inbox(address)
         
         for _ in range(int(timeout/self.inbox_refresh_delay)):
@@ -135,10 +134,11 @@ class Gmailnator:
             for message in self.get_inbox(address):
                 if message in cache:
                     continue
-                if all((matcher(getattr(message, attr))
-                        if callable(matcher)
-                        else getattr(message, attr) == matcher)
-                        for attr, matcher in match_attributes.items()):
+                if not match_attributes \
+                    or all((matcher(getattr(message, attr))
+                            if callable(matcher)
+                            else getattr(message, attr) == matcher)
+                            for attr, matcher in match_attributes.items()):
                     return message
         
         raise TimeoutError
