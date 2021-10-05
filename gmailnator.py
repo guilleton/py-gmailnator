@@ -15,8 +15,9 @@ class CertVerifyFixAdapter(HTTPAdapter):
         return super(CertVerifyFixAdapter, self).proxy_manager_for(*args, **kwargs)
 
 class Message:
-    def __init__(self, sender, subject, url, session=None):
+    def __init__(self, sender, sender_address, subject, url, session=None):
         self.sender = sender
+        self.sender_address = sender_address
         self.subject = subject
         self.url = url
         self.session = session
@@ -86,8 +87,12 @@ class Gmailnator:
             html = info["content"].strip()
             url, html = html.split("<a href=\"", 1)[1].split("\"", 1)
             sender, html = html.split("<td>", 1)[1].split("</td>", 1)
+            sender, _, sender_address = sender.partition("<")
+            if sender_address:
+                sender = sender.rstrip()
+                sender_address = sender_address.split(">", 1)[0]
             subject, html = html.split("<td>", 1)[1].split("</td>", 1)
-            message = Message(sender, subject, url, self)
+            message = Message(sender, sender_address, subject, url, self)
             messages.append(message)
         return messages
 
@@ -105,10 +110,10 @@ class Gmailnator:
         resp.raise_for_status()
         return resp.json()["content"].strip()
     
-    def wait_for_message(self, address, sender, timeout=60):
+    def wait_for_message(self, address, sender_address, timeout=60):
         for _ in range(int(timeout/self.inbox_refresh_delay)):
             time.sleep(self.inbox_refresh_delay)
             for message in self.get_inbox(address):
-                if message.sender.lower() == sender.lower():
+                if message.sender_address.lower() == sender_address.lower():
                     return message
         raise TimeoutError
