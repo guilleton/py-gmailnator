@@ -52,7 +52,7 @@ class Gmailnator:
                     "https://jnrbsn.github.io/user-agents/user-agents.json"
                     ).json()[0]
 
-    def __init__(self, proxy_url=None, timeout=None):
+    def __init__(self, proxy_url=None, timeout=30):
         self._http = requests.Session()
         self._http.mount("https://", CertVerifyFixAdapter())
         self._http.headers["User-Agent"] = self.user_agent
