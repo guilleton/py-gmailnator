@@ -18,7 +18,7 @@ except TimeoutError:
 
 # Documentation
 
-## Gmailnator(self, proxy_url=None, timeout=None)
+## Gmailnator(self, proxy_url=None, timeout=30)
 Initializes a Gmailnator session, keep in mind these are not restricted to one address at a time.
 
 ### .generate_address(non_gmail=False, plus=True, dot=True)
