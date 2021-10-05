@@ -1,6 +1,6 @@
 # py-gmailnator
  
-An unofficial python wrapper for gmailnator.com, a temp-email site that uses real @gmail.com addresses.
+An unofficial python wrapper for gmailnator.com, a temp-email site that uses real `@gmail.com` addresses.
 
 # Documentation
 
