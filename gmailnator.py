@@ -20,16 +20,24 @@ class Message:
         self.sender_address = sender_address
         self.subject = subject
         self.url = url
-        self.session = session
+        self._session = session
+        self._content = None
+
+    def __hash__(self):
+        return hash(self.url.lower())
     
     @property
     def content(self):
-        if not self.url.lower().startswith(self.session.base_url.lower()):
+        if self._content is not None:
+            return self._content
+
+        if not self.url.lower().startswith(self._session.base_url.lower()):
             return ""
 
         address_id = self.url.split("://", 1)[1].split("/", 2)[1]
         message_id = self.url.split("#", 1)[1]
-        return self.session.get_message_content(address_id, message_id)
+        self._content = self.session.get_message_content(address_id, message_id)
+        return self._content
 
 class Gmailnator:
     base_url = "https://www.gmailnator.com"
