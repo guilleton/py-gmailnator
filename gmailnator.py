@@ -42,7 +42,7 @@ class Message:
 
         address_id = self.url.split("://", 1)[1].split("/", 2)[1]
         message_id = self.url.split("#", 1)[1]
-        self._content = self.session.get_message_content(address_id, message_id)
+        self._content = self._session.get_message_content(address_id, message_id)
         return self._content
 
 class Gmailnator:
