@@ -125,9 +125,12 @@ class Gmailnator:
         return resp.json()["content"].strip()
     
     def wait_for_message(self, address, sender_address, timeout=60):
+        cache = self.get_inbox()
         for _ in range(int(timeout/self.inbox_refresh_delay)):
             time.sleep(self.inbox_refresh_delay)
             for message in self.get_inbox(address):
+                if message in cache:
+                    continue
                 if message.sender_address.lower() == sender_address.lower():
                     return message
         raise TimeoutError
