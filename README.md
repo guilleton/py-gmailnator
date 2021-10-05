@@ -20,6 +20,8 @@ Represents an email message from a gmailnator inbox.
 
 ### Message.sender
 
+### Message.sender_address
+
 ### Message.subject
 
 ### Message.content
