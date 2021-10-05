@@ -28,6 +28,7 @@ Returns an email address string from gmailnator's pool.
 Returns a list of `Message` objects from the address's inbox.
 
 ### .wait_for_message(self, address, timeout=60, **match_attributes)
+Values for `match_attributes` can literals or callables (first parameter being the value of the attr.)
 
 ## Message()
 Represents an email message from a gmailnator inbox.
