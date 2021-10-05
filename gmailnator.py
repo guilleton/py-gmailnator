@@ -23,8 +23,14 @@ class Message:
         self._session = session
         self._content = None
 
+    def __repr__(self):
+        return f"<Message from {self.sender}: {self.subject}>"
+
     def __hash__(self):
         return hash(self.url.lower())
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
     
     @property
     def content(self):
