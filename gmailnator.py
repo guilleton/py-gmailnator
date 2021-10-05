@@ -52,10 +52,12 @@ class Gmailnator:
                     "https://jnrbsn.github.io/user-agents/user-agents.json"
                     ).json()[0]
 
-    def __init__(self):
+    def __init__(self, proxy_url=None, timeout=None):
         self._http = requests.Session()
         self._http.mount("https://", CertVerifyFixAdapter())
         self._http.headers["User-Agent"] = self.user_agent
+        self._http.proxies = {"http": proxy_url, "https": proxy_url}
+        self._http.timeout = timeout
         self._csrf_token = None
         self._update_csrf_token()
 
@@ -124,13 +126,19 @@ class Gmailnator:
         resp.raise_for_status()
         return resp.json()["content"].strip()
     
-    def wait_for_message(self, address, sender_address, timeout=60):
-        cache = self.get_inbox()
+    def wait_for_message(self, address, timeout=60, **match_attributes):
+        assert match_attributes, "No attributes to match were specified."
+        cache = self.get_inbox(address)
+        
         for _ in range(int(timeout/self.inbox_refresh_delay)):
             time.sleep(self.inbox_refresh_delay)
             for message in self.get_inbox(address):
                 if message in cache:
                     continue
-                if message.sender_address.lower() == sender_address.lower():
+                if all((matcher(getattr(message, attr))
+                        if callable(matcher)
+                        else getattr(message, attr) == matcher)
+                        for attr, matcher in match_attributes.items()):
                     return message
+        
         raise TimeoutError
