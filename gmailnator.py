@@ -126,8 +126,8 @@ class Gmailnator:
         resp.raise_for_status()
         return resp.json()["content"].strip()
     
-    def wait_for_message(self, address, timeout=60, **match_attributes):
-        cache = self.get_inbox(address)
+    def wait_for_message(self, address, timeout=60, ignore_existing=False, **match_attributes):
+        cache = self.get_inbox(address) if ignore_existing else []
         
         for _ in range(int(timeout/self.inbox_refresh_delay)):
             time.sleep(self.inbox_refresh_delay)
