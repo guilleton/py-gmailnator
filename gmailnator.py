@@ -40,7 +40,8 @@ class Message:
         if not self.url.lower().startswith(self._session.base_url.lower()):
             return ""
 
-        address_id = self.url.split("://", 1)[1].split("/", 2)[1]
+        address_id = self.url.split("://", 1)[1]\
+                             .split("/", 2)[1]
         message_id = self.url.split("#", 1)[1]
         self._content = self._session.get_message_content(address_id, message_id)
         return self._content
@@ -111,13 +112,16 @@ class Gmailnator:
         messages = []
         for info in resp.json():
             html = info["content"].strip()
-            url, html = html.split("<a href=\"", 1)[1].split("\"", 1)
-            sender, html = html.split("<td>", 1)[1].split("</td>", 1)
+            url, html = html.split('<a href="', 1)[1]\
+                            .split('"', 1)
+            sender, html = html.split("<td>", 1)[1]\
+                               .split("</td>", 1)
             sender, _, sender_address = sender.partition("<")
             if sender_address:
                 sender = sender.rstrip()
                 sender_address = sender_address.split(">", 1)[0]
-            subject, html = html.split("<td>", 1)[1].split("</td>", 1)
+            subject, html = html.split("<td>", 1)[1]\
+                                .split("</td>", 1)
             message = Message(sender, sender_address, subject, url, self)
             messages.append(message)
 
