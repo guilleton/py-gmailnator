@@ -5,7 +5,6 @@ import time
 import requests
 
 def parse_message_html(html):
-    o_html = html
     url, html = html.split('<a href="', 1)[1]\
                     .split('"', 1)
     url = unescape(url)
