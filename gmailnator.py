@@ -55,7 +55,7 @@ class Message:
         return hash(self) == hash(other)
     
     @property
-    def content(self):
+    def content(self) -> str:
         if self._content is not None:
             return self._content
 
