@@ -78,9 +78,9 @@ class Gmailnator:
 
     def _update_csrf_token(self):
         resp = self._request("GET", f"{self.base_url}/")
-        self._csrf_token = unescape(resp.text\
+        self._csrf_token = resp.text\
             .split('<meta name="csrf-token" id="csrf-token" content="', 1)[1]\
-            .split('">', 1)[0])
+            .split('">', 1)[0]
     
     def generate_address(self, non_gmail=False, plus=True, dot=True):
         options = []
@@ -113,16 +113,19 @@ class Gmailnator:
         messages = []
         for info in resp.json():
             html = info["content"].strip()
-            url, html = unescape(html.split('<a href="', 1)[1]\
-                                     .split('"', 1))
-            sender, html = unescape(html.split("<td>", 1)[1]\
-                                        .split("</td>", 1))
+            url, html = html.split('<a href="', 1)[1]\
+                            .split('"', 1)
+            sender, html = html.split("<td>", 1)[1]\
+                               .split("</td>", 1)
             sender, _, sender_address = sender.partition("<")
             if sender_address:
                 sender = sender.rstrip()
                 sender_address = sender_address.split(">", 1)[0]
-            subject, html = unescape(html.split("<td>", 1)[1]\
-                                         .split("</td>", 1))
+            subject, html = html.split("<td>", 1)[1]\
+                                .split("</td>", 1)
+            url = unescape(url)
+            sender = unescape(sender)
+            subject = unescape(subject)
             message = Message(sender, sender_address, subject, url, self)
             messages.append(message)
 
