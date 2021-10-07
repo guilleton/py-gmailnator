@@ -8,6 +8,7 @@ def parse_message_html(html):
     o_html = html
     url, html = html.split('<a href="', 1)[1]\
                     .split('"', 1)
+    url = unescape(url)
     sender, html = html.split("<td>", 1)[1]\
                         .split("</td>", 1)
     sender = unescape(sender)
