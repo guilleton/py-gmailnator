@@ -114,15 +114,15 @@ class Gmailnator:
         for info in resp.json():
             html = info["content"].strip()
             url, html = unescape(html.split('<a href="', 1)[1]\
-                            .split('"', 1))
+                                     .split('"', 1))
             sender, html = unescape(html.split("<td>", 1)[1]\
-                               .split("</td>", 1))
+                                        .split("</td>", 1))
             sender, _, sender_address = sender.partition("<")
             if sender_address:
                 sender = sender.rstrip()
                 sender_address = sender_address.split(">", 1)[0]
             subject, html = unescape(html.split("<td>", 1)[1]\
-                                .split("</td>", 1))
+                                         .split("</td>", 1))
             message = Message(sender, sender_address, subject, url, self)
             messages.append(message)
 
