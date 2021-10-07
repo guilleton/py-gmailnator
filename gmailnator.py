@@ -150,9 +150,8 @@ class Gmailnator:
                 "email": address_id
             }
         )
-        return resp.json()["content"].split('<div dir="ltr">', 1)[-1]\
-                                     .rsplit("</div>", 1)[0]
-    
+        return resp.json()["content"]
+        
     def wait_for_message(self, address: str, timeout: float=60,
                                ignore_present: bool=False,
                                **match_attributes) -> Message:
