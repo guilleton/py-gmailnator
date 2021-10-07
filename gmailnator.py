@@ -48,6 +48,9 @@ class Message:
 class Gmailnator:
     base_url = "https://www.gmailnator.com"
     inbox_refresh_delay = 15
+    request_retry_delay = 2
+    max_request_retries = 3
+    retry_status_codes = (500, 501, 502, 503)
     user_agent = requests.get(
                     "https://jnrbsn.github.io/user-agents/user-agents.json"
                     ).json()[0]
@@ -60,10 +63,19 @@ class Gmailnator:
         self._http.timeout = timeout
         self._csrf_token = None
         self._update_csrf_token()
+    
+    def _request(self, method, url, _retry=0, **kwargs):
+        resp = self._http.request(method, url, **kwargs)
+        if not resp.ok:
+            if not resp.status_code in self.retry_status_codes \
+                or _retry >= self.max_request_retries:
+                resp.raise_for_status()
+            time.sleep(self.request_retry_delay)
+            return self._request(method, url, _retry=_retry+1, **kwargs)
+        return resp
 
     def _update_csrf_token(self):
-        resp = self._http.request("GET", f"{self.base_url}/")
-        resp.raise_for_status()
+        resp = self._request("GET", f"{self.base_url}/")
         self._csrf_token = resp.text\
             .split('<meta name="csrf-token" id="csrf-token" content="', 1)[1]\
             .split('">', 1)[0]
@@ -74,7 +86,7 @@ class Gmailnator:
         if plus: options.append(2)
         if dot: options.append(3)
 
-        resp = self._http.request(
+        resp = self._request(
             method="POST", 
             url=f"{self.base_url}/index/indexquery",
             data={
@@ -83,11 +95,10 @@ class Gmailnator:
                 "data[]": options
             }
         )
-        resp.raise_for_status()
         return resp.text.strip()
 
     def get_inbox(self, address):
-        resp = self._http.request(
+        resp = self._request(
             method="POST", 
             url=f"{self.base_url}/mailbox/mailboxquery",
             data={
@@ -96,7 +107,6 @@ class Gmailnator:
                 "Email_address": address
             }
         )
-        resp.raise_for_status()
 
         messages = []
         for info in resp.json():
@@ -110,10 +120,11 @@ class Gmailnator:
             subject, html = html.split("<td>", 1)[1].split("</td>", 1)
             message = Message(sender, sender_address, subject, url, self)
             messages.append(message)
+
         return messages
 
     def get_message_content(self, address_id, message_id):
-        resp = self._http.request(
+        resp = self._request(
             method="POST",
             url=f"{self.base_url}/mailbox/get_single_message/",
             data={
@@ -123,7 +134,6 @@ class Gmailnator:
                 "email": address_id
             }
         )
-        resp.raise_for_status()
         return resp.json()["content"].strip()
     
     def wait_for_message(self, address, timeout=60, ignore_existing=False, **match_attributes):
