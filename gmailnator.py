@@ -1,10 +1,31 @@
+from typing import List
 from html import unescape
 from ssl import create_default_context
-from requests.adapters import HTTPAdapter
 import time
 import requests
 
-class CertVerifyFixAdapter(HTTPAdapter):
+def parse_message_html(html):
+    o_html = html
+    url, html = html.split('<a href="', 1)[1]\
+                    .split('"', 1)
+    sender, html = html.split("<td>", 1)[1]\
+                        .split("</td>", 1)
+    sender = unescape(sender)
+    sender, _, sender_address = sender.partition("<")
+    if sender_address:
+        sender = sender.rstrip()
+        sender_address = sender_address.split(">", 1)[0]
+    subject, html = html.split("<td>", 1)[1]\
+                        .split("</td>", 1)
+    subject = unescape(subject)
+    return (
+        sender,
+        sender_address,
+        subject,
+        url
+    )
+
+class CertVerifyFixAdapter(requests.adapters.HTTPAdapter):
     def init_poolmanager(self, *args, **kwargs):
         context = create_default_context()
         kwargs["ssl_context"] = context
@@ -66,31 +87,33 @@ class Gmailnator:
         self._csrf_token = None
         self._update_csrf_token()
     
-    def _request(self, method, url, _retry=0, **kwargs):
+    def _request(self, method, path, _retry=0, **kwargs):
+        url = self.base_url + path
         resp = self._http.request(method, url, **kwargs)
+
         if not resp.ok:
             if not resp.status_code in self.retry_status_codes \
                 or _retry >= self.max_request_retries:
                 resp.raise_for_status()
             time.sleep(self.request_retry_delay)
-            return self._request(method, url, _retry=_retry+1, **kwargs)
+            return self._request(method, path, _retry=_retry+1, **kwargs)
+        
         return resp
 
     def _update_csrf_token(self):
-        resp = self._request("GET", f"{self.base_url}/")
+        resp = self._request("GET", "/")
         self._csrf_token = resp.text\
             .split('<meta name="csrf-token" id="csrf-token" content="', 1)[1]\
             .split('">', 1)[0]
     
-    def generate_address(self, non_gmail=False, plus=True, dot=True):
+    def generate_address(self, non_gmail: bool=False, plus: bool=True,
+                               dot: bool=True) -> str:
         options = []
         if non_gmail: options.append(1)
         if plus: options.append(2)
         if dot: options.append(3)
 
-        resp = self._request(
-            method="POST", 
-            url=f"{self.base_url}/index/indexquery",
+        resp = self._request("POST", "/index/indexquery",
             data={
                 "csrf_gmailnator_token": self._csrf_token,
                 "action": "GenerateEmail",
@@ -99,10 +122,8 @@ class Gmailnator:
         )
         return resp.text.strip()
 
-    def get_inbox(self, address):
-        resp = self._request(
-            method="POST", 
-            url=f"{self.base_url}/mailbox/mailboxquery",
+    def get_inbox(self, address: str) -> List[Message]:
+        resp = self._request("POST", "/mailbox/mailboxquery",
             data={
                 "csrf_gmailnator_token": self._csrf_token,
                 "action": "LoadMailList",
@@ -113,28 +134,15 @@ class Gmailnator:
         messages = []
         for info in resp.json():
             html = info["content"].strip()
-            url, html = html.split('<a href="', 1)[1]\
-                            .split('"', 1)
-            sender, html = html.split("<td>", 1)[1]\
-                               .split("</td>", 1)
-            sender, _, sender_address = sender.partition("<")
-            if sender_address:
-                sender = sender.rstrip()
-                sender_address = sender_address.split(">", 1)[0]
-            subject, html = html.split("<td>", 1)[1]\
-                                .split("</td>", 1)
-            url = unescape(url)
-            sender = unescape(sender)
-            subject = unescape(subject)
-            message = Message(sender, sender_address, subject, url, self)
+            sender, sender_address, subject, url = parse_message_html(html)
+            message = Message(sender, sender_address, subject, url,
+                              session=self)
             messages.append(message)
 
         return messages
 
-    def get_message_content(self, address_id, message_id):
-        resp = self._request(
-            method="POST",
-            url=f"{self.base_url}/mailbox/get_single_message/",
+    def get_message_content(self, address_id: str, message_id: str) -> str:
+        resp = self._request("POST", "/mailbox/get_single_message/",
             data={
                 "csrf_gmailnator_token": self._csrf_token,
                 "action": "get_message",
@@ -142,9 +150,12 @@ class Gmailnator:
                 "email": address_id
             }
         )
-        return resp.json()["content"].strip()
+        return resp.json()["content"].split('<div dir="ltr">', 1)[-1]\
+                                     .rsplit("</div>", 1)[0]
     
-    def wait_for_message(self, address, timeout=60, ignore_existing=False, **match_attributes):
+    def wait_for_message(self, address: str, timeout: float=60,
+                               ignore_existing: bool=False,
+                               **match_attributes) -> Message:
         cache = self.get_inbox(address) if ignore_existing else []
         
         for _ in range(int(timeout/self.inbox_refresh_delay)):
@@ -159,4 +170,4 @@ class Gmailnator:
                             for attr, matcher in match_attributes.items()):
                     return message
         
-        raise TimeoutError
+        raise TimeoutError("Timed out while waiting for message.")
