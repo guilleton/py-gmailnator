@@ -9,7 +9,7 @@ def parse_message_html(html):
                     .split('"', 1)
     url = unescape(url)
     sender, html = html.split("<td>", 1)[1]\
-                        .split("</td>", 1)
+                       .split("</td>", 1)
     sender = unescape(sender)
     sender, _, sender_address = sender.partition("<")
     if sender_address:
@@ -151,7 +151,7 @@ class Gmailnator:
             }
         )
         return resp.json()["content"]
-        
+
     def wait_for_message(self, address: str, timeout: float=60,
                                ignore_present: bool=False,
                                **match_attributes) -> Message:
