@@ -7,12 +7,12 @@ import requests
 class CertVerifyFixAdapter(HTTPAdapter):
     def init_poolmanager(self, *args, **kwargs):
         context = create_default_context()
-        kwargs['ssl_context'] = context
+        kwargs["ssl_context"] = context
         return super(CertVerifyFixAdapter, self).init_poolmanager(*args, **kwargs)
 
     def proxy_manager_for(self, *args, **kwargs):
         context = create_default_context()
-        kwargs['ssl_context'] = context
+        kwargs["ssl_context"] = context
         return super(CertVerifyFixAdapter, self).proxy_manager_for(*args, **kwargs)
 
 class Message:
