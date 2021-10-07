@@ -154,9 +154,9 @@ class Gmailnator:
                                      .rsplit("</div>", 1)[0]
     
     def wait_for_message(self, address: str, timeout: float=60,
-                               ignore_existing: bool=False,
+                               ignore_present: bool=False,
                                **match_attributes) -> Message:
-        cache = self.get_inbox(address) if ignore_existing else []
+        cache = self.get_inbox(address) if ignore_present else []
         
         for _ in range(int(timeout/self.inbox_refresh_delay)):
             time.sleep(self.inbox_refresh_delay)
