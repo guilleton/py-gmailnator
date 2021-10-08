@@ -27,8 +27,8 @@ Returns an email address string from gmailnator's pool.
 ### .get_inbox(address)
 Returns a list of `Message` objects from the address's inbox.
 
-### .wait_for_message(self, address, timeout=60, ignore_existing=False, **match_attributes)
-Values for `match_attributes` can be literals or callables (first parameter being the value of the attr.). `ignore_existing` will ignore messages that are present at the time of calling the method.
+### .wait_for_message(self, address, timeout=60, ignore_present=False, **match_attributes)
+Values for `match_attributes` can be literals or callables (first parameter being the value of the attr.). `ignore_present` will ignore messages that are present at the time of calling the method.
 
 ## Message()
 Represents an email message from a gmailnator inbox.
