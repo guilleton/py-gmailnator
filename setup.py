@@ -12,7 +12,7 @@ with open(os.path.join(current_path, "README.md")) as f:
 
 setup(
     name = "gmailnator",
-    version = '0.1.0',
+    version = str(__import__("time").time()), # '0.1.0',
     description = "Python wrapper for Gmailnator",
     long_description = readme_text,
     long_description_content_type = "text/markdown",
